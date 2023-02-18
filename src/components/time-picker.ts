@@ -1,9 +1,15 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js'
-import { TimeFormat } from '../enums';
+import { KeyboardArrowKey, TimeFormat } from '../enums';
 
 @customElement('time-picker')
 export class TimePicker extends LitElement {
+    static readonly MAXIMUMS = {
+        hour: 24,
+        minute: 60,
+        isAM: 2
+    };
+
     static styles = css`
         :host {
             display: inline-block;
@@ -43,20 +49,21 @@ export class TimePicker extends LitElement {
             return;
 
         return html`
-        <span @keydown="${this.toggleAM}" tabindex="0">
+        <span @keydown="${this.handleKeyDown}" data-input="isAM" tabindex="3">
         ${this._isAM ? "AM" : "PM"}
         </span>
         `;
     }
 
     protected render() {
+        // TODO: Handle standard time or 12 hour format.
         return html`
         <div class="picker">
-            <span @keydown="${this.handleKeyDown}" data-input="_hour" tabindex="0">
+            <span @keydown="${this.handleKeyDown}" data-input="hour" tabindex="1">
                 ${this._hour.toString().padStart(2, '0')}
             </span>
             <span>:</span>
-            <span @keydown="${this.handleKeyDown}" data-input="_minute" tabindex="0">
+            <span @keydown="${this.handleKeyDown}" data-input="minute" tabindex="2">
                 ${this._minute.toString().padStart(2, '0')}
             </span>
             ${this.renderFormat()}
@@ -65,28 +72,60 @@ export class TimePicker extends LitElement {
     }
 
     private handleKeyDown(event: KeyboardEvent) {
-        const allowedKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
-        const key = event.key;
-        const target = event.target;
+        if (event.key.includes('Arrow'))
+            this.handleArrowInputs(event);
 
-        if (!allowedKeys.includes(key) || !(target instanceof HTMLSpanElement)) {
-            return;
-        }
-        
-        const input = target.dataset['input'];
-        const increment = this[input] + (39 - event.which);
-        const maximum = input === '_hour' ? 24 : 60;
-
-        this[input] = this.overflowValue(increment, 0, maximum);
+        if (event.key.match(/[0-9]/))
+            this.handleNumericInputs(event);
     }
 
-    private toggleAM(event: KeyboardEvent) {
-        const allowedKeys = ['ArrowUp', 'ArrowDown'];
+    private handleArrowInputs(event: KeyboardEvent) {
+        switch (event.key) {
+            case 'ArrowUp':
+            case 'ArrowDown':
+                this.handleIncrement(event);
+                break;
+            case 'ArrowLeft':
+            case 'ArrowRight':
+                this.handleFocus(event);
+                break;
+        }
+    }
 
-        if (!allowedKeys.includes(event.key))
+    private handleIncrement(event: KeyboardEvent) {
+        const target = event.target;
+
+        if (!(target instanceof HTMLSpanElement))
             return;
 
-        this._isAM = !this._isAM;
+        const input = target.dataset['input'];
+        const inputKey = `_${input}`;
+        const increment = this.incrementValue(this[inputKey], event.key, 39);
+        const maximum = TimePicker.MAXIMUMS[input];
+
+        this[inputKey] = this.overflowValue(increment, 0, maximum);
+
+        // TODO: Handle increment for hour when minutes overflow.
+    }
+
+    private handleFocus(event: KeyboardEvent) {
+        const currentElement = this.shadowRoot.activeElement as HTMLElement;
+        const currentIndex = parseInt(currentElement.getAttribute('tabIndex'));
+        const increment = this.incrementValue(currentIndex, event.key, 38);
+        const nextIndex = this.overflowValue(increment, 1, 4);
+        const nextElement = this.shadowRoot.querySelector(`[tabIndex="${nextIndex}"]`) as HTMLElement;
+
+        if (nextElement)
+            nextElement.focus();
+    }
+
+    private handleNumericInputs(event: KeyboardEvent) {
+        // TODO: Implement numeric inputs.
+        console.log('handleNumericInputs()', event);
+    }
+
+    private incrementValue(base: number, key: string, reference: number) : number {
+        return base + (KeyboardArrowKey[key] - reference);
     }
 
     private overflowValue(value: number, minimum: number, maximum: number) : number {
