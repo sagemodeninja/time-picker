@@ -6,3 +6,8 @@ export enum KeyboardArrowKey {
     ArrowRight = 39,
     ArrowDown = 40
 }
+
+export enum TimePeriod {
+    AM,
+    PM
+}

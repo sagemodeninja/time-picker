@@ -1,33 +1,43 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js'
-import { KeyboardArrowKey } from '../enums';
+import { KeyboardArrowKey, TimePeriod } from '../enums';
 
 @customElement('time-picker')
 export class TimePicker extends LitElement {
     static readonly MAXIMUMS = {
         hour: 12,
         minute: 59,
-        isAM: 1
+        period: 1
     };
 
     static styles = css`
-        :host {
-            display: inline-block;
-        }
-
-        .picker {
-            border: solid 1px rgb(136 136 136);
+        #input {
+            align-items: center;
+            border: solid 1px rgb(118 118 118);
             border-radius: 3px;
+            display: inline-flex;
+            font-family: monospace;
+            padding: 0 1px;
+            user-select: none;
         }
 
-        span {
-            font-size: 15px;
-            line-height: 1;
+        #input:focus-within {
+            border-color: black;
+            outline: solid 1px black;
         }
 
-        span:focus {
-            background-color: rgb(181 213 255);
+        #input span {
+            display: inline;
+            font-size: 13px;
+            line-height: 17px;
             outline: none;
+            padding: 1px;
+            text-align: start;
+        }
+
+        #input span:focus {
+            background-color: rgb(0 120 215);
+            color: white;
         }
     `;
 
@@ -41,7 +51,7 @@ export class TimePicker extends LitElement {
     minute : number = 0;
 
     @property()
-    isAM: boolean = true;
+    period: TimePeriod = TimePeriod.AM;
 
     set value(val: string) {
         const pattern = /(\d{2}):(\d{2}) (AM|PM)/;
@@ -52,7 +62,7 @@ export class TimePicker extends LitElement {
 
             this.hour = parseInt(match[1]);
             this.minute = parseInt(match[2]);
-            this.isAM = match[3] === 'AM';
+            this.period = TimePeriod[match[3]];
         
             this.requestUpdate('value', oldValue);
         }
@@ -62,14 +72,14 @@ export class TimePicker extends LitElement {
     get value() : string {
         const hour = this.hour.toString().padStart(2, '0');
         const minute = this.minute.toString().padStart(2, '0');
-        const period = this.isAM ? 'AM' : 'PM';
+        const period = TimePeriod[this.period];
 
         return `${hour}:${minute} ${period}`;
     }
 
     protected render() {
         return html`
-        <div class="picker">
+        <div id="input">
             <span @keydown="${this.handleKeyDownEvent}"
                 @focus="${this.handleFocusEvent}"
                 @focusout="${this.handleFocusOutEvent}"
@@ -85,21 +95,29 @@ export class TimePicker extends LitElement {
                 tabindex="2">
                 ${this.minute.toString().padStart(2, '0')}
             </span>
+            <span></span>
             <span @keydown="${this.handleKeyDownEvent}"
-                data-input="isAM"
+                data-input="period"
                 tabindex="3">
-                ${this.isAM ? "AM" : "PM"}
+                ${TimePeriod[this.period]}
             </span>
         </div>
         `;
     }
 
     private handleKeyDownEvent(event: KeyboardEvent) {
-        if (event.code.includes('Arrow'))
+        const code = event.code;
+        const numericPattern = /(?<!F)[0-9]/;
+        const periodPattern = /Key[AP]/;
+
+        if (code.includes('Arrow'))
             this.handleArrowInputs(event);
 
-        if (event.key.match(/[0-9]/))
+        if (code.match(numericPattern))
             this.handleNumericInputs(event);
+
+        if (code.match(periodPattern))
+            this.handlePeriodInputs(event);
     }
 
     private handleFocusEvent() {
@@ -115,6 +133,7 @@ export class TimePicker extends LitElement {
         const maximum = TimePicker.MAXIMUMS[input];
 
         this[input] = Math.max(Math.min(value, maximum), minimum);
+        this.dispatchEvent(new CustomEvent('change'));
     }
 
     private handleArrowInputs(event: KeyboardEvent) {
@@ -134,7 +153,7 @@ export class TimePicker extends LitElement {
         const target = event.target as HTMLElement;
         const input = target.dataset['input'];
 
-        if (input === 'isAM')
+        if (input === 'period')
             return;
 
         this._inputBuffer += event.key;
@@ -147,6 +166,18 @@ export class TimePicker extends LitElement {
 
         if ((value * 10) > maximum)
             this.focusNextInput(target, 1);
+    }
+
+    private handlePeriodInputs(event: KeyboardEvent) {
+        const target = event.target as HTMLElement;
+        const input = target.dataset['input'];
+        const key = event.code.substring(3);
+
+        if (input !== 'period')
+            return;
+
+        this.period = TimePeriod[`${key}M`];
+        this.dispatchEvent(new CustomEvent('change'));
     }
 
     private handleIncrement(event: KeyboardEvent) {
