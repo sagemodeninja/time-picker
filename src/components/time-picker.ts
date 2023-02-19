@@ -173,8 +173,7 @@ export class TimePicker extends LitElement {
         const index = currentIndex + increment;
         const element = this.shadowRoot.querySelector(`[tabIndex="${index}"]`) as HTMLElement;
 
-        if (element)
-            element.focus();
+        element?.focus();
     }
 
     private overflowValue(value: number, minimum: number, maximum: number) : number {
