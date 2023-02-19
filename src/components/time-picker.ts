@@ -31,6 +31,9 @@ export class TimePicker extends LitElement {
         }
     `;
 
+    @state()
+    private _inputBuffer: string;
+
     @property()
     hour : number = 0;
 
@@ -40,8 +43,29 @@ export class TimePicker extends LitElement {
     @property()
     isAM: boolean = true;
 
-    @state()
-    private _inputBuffer: number[];
+    set value(val: string) {
+        const pattern = /(\d{2}):(\d{2}) (AM|PM)/;
+        const match = val.match(pattern);
+
+        if (match) {
+            const oldValue = this.value;
+
+            this.hour = parseInt(match[1]);
+            this.minute = parseInt(match[2]);
+            this.isAM = match[3] === 'AM';
+        
+            this.requestUpdate('value', oldValue);
+        }
+    }
+
+    @property()
+    get value() : string {
+        const hour = this.hour.toString().padStart(2, '0');
+        const minute = this.minute.toString().padStart(2, '0');
+        const period = this.isAM ? 'AM' : 'PM';
+
+        return `${hour}:${minute} ${period}`;
+    }
 
     protected render() {
         return html`
@@ -78,8 +102,8 @@ export class TimePicker extends LitElement {
             this.handleNumericInputs(event);
     }
 
-    private handleFocusEvent(event: FocusEvent) {
-        this._inputBuffer = [];
+    private handleFocusEvent() {
+        this._inputBuffer = '';
     }
 
     private handleFocusOutEvent(event: FocusEvent) {
@@ -109,27 +133,32 @@ export class TimePicker extends LitElement {
     private handleNumericInputs(event: KeyboardEvent) {
         const target = event.target as HTMLElement;
         const input = target.dataset['input'];
-        const index = this._inputBuffer.length;
 
         if (input === 'isAM')
             return;
 
-        this._inputBuffer[index] = parseInt(event.key);
-        this[input] = parseInt(this._inputBuffer.join(''));
+        this._inputBuffer += event.key;
 
-        if (index === 1)
+        const value = parseInt(this._inputBuffer);
+        const maximum = input === 'hour' ? 12 : 59;
+
+        this[input] = value;
+        this.dispatchEvent(new CustomEvent('change'));
+
+        if ((value * 10) > maximum)
             this.focusNextInput(target, 1);
     }
 
     private handleIncrement(event: KeyboardEvent) {
         const target = event.target as HTMLElement;
         const input = target.dataset['input'];
-        const increment = this[input] + (KeyboardArrowKey[event.key] - 39);
+        const increment = this[input] + (39 - KeyboardArrowKey[event.key]);
 
         const minimum = input === 'hour' ? 1 : 0;
         const maximum = TimePicker.MAXIMUMS[input];
 
         this[input] = this.overflowValue(increment, minimum, maximum);
+        this.dispatchEvent(new CustomEvent('change'));
     }
 
     private handleFocus(event: KeyboardEvent) {

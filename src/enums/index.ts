@@ -1,8 +1,8 @@
-// Slightly modified replication of the deprecated
+// Replication of the deprecated
 // `KeyboardEvent.which` property.
 export enum KeyboardArrowKey {
     ArrowLeft = 37,
-    ArrowDown = 38,
+    ArrowUp = 38,
     ArrowRight = 39,
-    ArrowUp = 40
+    ArrowDown = 40
 }
