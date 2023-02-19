@@ -1,3 +1,4 @@
+import './components/time-picker'
 import { TimePicker } from "./components/time-picker";
 
 document.addEventListener('DOMContentLoaded', () => {

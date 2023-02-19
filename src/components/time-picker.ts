@@ -1,6 +1,9 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js'
 import { KeyboardArrowKey, TimePeriod } from '../enums';
+import './time-picker-dropdown'
+import { TimePickerDropDown } from './time-picker-dropdown';
+import { Ref, ref, createRef } from 'lit/directives/ref.js';
 
 @customElement('time-picker')
 export class TimePicker extends LitElement {
@@ -41,6 +44,8 @@ export class TimePicker extends LitElement {
         }
     `;
 
+    pickerRef: Ref<TimePickerDropDown> = createRef();
+
     @state()
     private _inputBuffer: string;
 
@@ -79,7 +84,8 @@ export class TimePicker extends LitElement {
 
     protected render() {
         return html`
-        <div id="input">
+        <div id="input"
+            @click="${this.handleClickEvent}">
             <span @keydown="${this.handleKeyDownEvent}"
                 @focus="${this.handleFocusEvent}"
                 @focusout="${this.handleFocusOutEvent}"
@@ -102,6 +108,7 @@ export class TimePicker extends LitElement {
                 ${TimePeriod[this.period]}
             </span>
         </div>
+        <time-picker-dropdown ${ref(this.pickerRef)}></time-picker-dropdown>
         `;
     }
 
@@ -133,6 +140,13 @@ export class TimePicker extends LitElement {
 
         this[input] = Math.max(Math.min(value, maximum), minimum);
         this.dispatchEvent(new CustomEvent('change'));
+    }
+
+    private handleClickEvent(event: MouseEvent) {
+        this.pickerRef.value.show(this);
+        
+        event.stopPropagation();
+        document.addEventListener('click', this.handleDropdownDismiss);
     }
 
     private handleArrowInputs(event: KeyboardEvent) {
@@ -198,6 +212,14 @@ export class TimePicker extends LitElement {
         this.focusNextInput(element, increment);
     }
 
+    private handleDropdownDismiss = (event: MouseEvent) => {
+        if (event.target === this)
+            return;
+
+        this.pickerRef.value.hide();
+        document.removeEventListener('click', this.handleDropdownDismiss);
+    }
+
     private focusNextInput(currentInput: HTMLElement, increment: number) {
         const currentIndex = parseInt(currentInput.getAttribute('tabIndex'));
         const index = currentIndex + increment;
@@ -211,5 +233,11 @@ export class TimePicker extends LitElement {
         const distance = value - minimum;
 
         return (distance % range + range) % range + minimum;
+    }
+}
+
+declare global {
+    interface HTMLElementTagNameMap {
+        "time-picker": TimePicker;
     }
 }

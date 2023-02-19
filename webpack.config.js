@@ -4,8 +4,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 module.exports = {
     mode: 'development',
     entry: {
-        'app': './src/app.ts',
-        'time-picker': './src/components/time-picker.ts'
+        'app': './src/app.ts'
     },
     output: {
         path: path.resolve(__dirname, 'dist'),
@@ -14,7 +13,7 @@ module.exports = {
     plugins: [
         new HtmlWebpackPlugin({
             template: 'public/index.html',
-            chunks: ['app', 'time-picker']
+            chunks: ['app']
         })
     ],
     module: {
