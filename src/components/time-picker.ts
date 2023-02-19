@@ -106,17 +106,16 @@ export class TimePicker extends LitElement {
     }
 
     private handleKeyDownEvent(event: KeyboardEvent) {
-        const code = event.code;
-        const numericPattern = /(?<!F)[0-9]/;
+        const numericPattern = /[0-9]/;
         const periodPattern = /Key[AP]/;
 
-        if (code.includes('Arrow'))
+        if (event.code.includes('Arrow'))
             this.handleArrowInputs(event);
 
-        if (code.match(numericPattern))
+        if (event.key.match(numericPattern))
             this.handleNumericInputs(event);
 
-        if (code.match(periodPattern))
+        if (event.code.match(periodPattern))
             this.handlePeriodInputs(event);
     }
 
