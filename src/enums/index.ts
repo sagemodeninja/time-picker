@@ -1,5 +1,3 @@
-import { TimeFormat } from './time-format'
-
 // Slightly modified replication of the deprecated
 // `KeyboardEvent.which` property.
 export enum KeyboardArrowKey {
@@ -8,5 +6,3 @@ export enum KeyboardArrowKey {
     ArrowRight = 39,
     ArrowUp = 40
 }
-
-export { TimeFormat }
