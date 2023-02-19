@@ -1,14 +1,14 @@
 {
   "name": "time-picker",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "version": "0.1.0",
+  "description": "TimePicker is a simple web component implementation of a time picker.",
   "scripts": {
     "build": "webpack",
-    "watch": "webpack --watch"
+    "watch": "webpack --watch",
+    "start": "node server.js"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Gary Antier <contact@garyantier.com> (https://garyantier.com)",
+  "license": "MIT",
   "devDependencies": {
     "html-webpack-plugin": "^5.5.0",
     "ts-loader": "^9.4.2",
@@ -17,6 +17,7 @@
     "webpack-cli": "^5.0.1"
   },
   "dependencies": {
+    "express": "^4.18.2",
     "lit": "^2.6.1"
   }
 }
