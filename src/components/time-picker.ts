@@ -98,8 +98,8 @@ export class TimePicker extends LitElement {
         if (event.code.includes('Arrow'))
             this.handleArrowInputs(event);
 
-        if (event.code.includes('Digit'))
-            this.handleNumericInputs(event);
+        if (event.code.match(/Digit|Numpad/))
+            this.handleNumericInputs(event);7
     }
 
     private handleFocusEvent() {
