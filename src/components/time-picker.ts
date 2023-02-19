@@ -5,9 +5,9 @@ import { KeyboardArrowKey } from '../enums';
 @customElement('time-picker')
 export class TimePicker extends LitElement {
     static readonly MAXIMUMS = {
-        hour: 13,
-        minute: 60,
-        isAM: 2
+        hour: 12,
+        minute: 59,
+        isAM: 1
     };
 
     static styles = css`
@@ -111,8 +111,8 @@ export class TimePicker extends LitElement {
         const input = target.dataset['input'];
         
         const value = this[input];
-        const minimum = input === 'hour' ? 1 : 0;
-        const maximum = input === 'hour' ? 12 : 59;
+        const minimum = +(input === 'hour');
+        const maximum = TimePicker.MAXIMUMS[input];
 
         this[input] = Math.max(Math.min(value, maximum), minimum);
     }
@@ -140,7 +140,7 @@ export class TimePicker extends LitElement {
         this._inputBuffer += event.key;
 
         const value = parseInt(this._inputBuffer);
-        const maximum = input === 'hour' ? 12 : 59;
+        const maximum = TimePicker.MAXIMUMS[input];
 
         this[input] = value;
         this.dispatchEvent(new CustomEvent('change'));
@@ -154,7 +154,7 @@ export class TimePicker extends LitElement {
         const input = target.dataset['input'];
         const increment = this[input] + (39 - KeyboardArrowKey[event.key]);
 
-        const minimum = input === 'hour' ? 1 : 0;
+        const minimum = +(input === 'hour');
         const maximum = TimePicker.MAXIMUMS[input];
 
         this[input] = this.overflowValue(increment, minimum, maximum);
@@ -178,7 +178,7 @@ export class TimePicker extends LitElement {
     }
 
     private overflowValue(value: number, minimum: number, maximum: number) : number {
-        const range = maximum - minimum;
+        const range = maximum - minimum + 1;
         const distance = value - minimum;
 
         return (distance % range + range) % range + minimum;
