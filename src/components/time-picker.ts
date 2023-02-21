@@ -4,6 +4,7 @@ import { KeyboardArrowKey, TimePeriod } from '../enums';
 import './time-picker-dropdown'
 import { TimePickerDropDown } from './time-picker-dropdown';
 import { Ref, ref, createRef } from 'lit/directives/ref.js';
+import { overflowValue } from '../utils';
 
 @customElement('time-picker')
 export class TimePicker extends LitElement {
@@ -108,7 +109,8 @@ export class TimePicker extends LitElement {
                 ${TimePeriod[this.period]}
             </span>
         </div>
-        <time-picker-dropdown ${ref(this.pickerRef)}></time-picker-dropdown>
+        <time-picker-dropdown height="150"
+            ${ref(this.pickerRef)}></time-picker-dropdown>
         `;
     }
 
@@ -201,7 +203,7 @@ export class TimePicker extends LitElement {
         const minimum = +(input === 'hour');
         const maximum = TimePicker.MAXIMUMS[input];
 
-        this[input] = this.overflowValue(increment, minimum, maximum);
+        this[input] = overflowValue(increment, minimum, maximum);
         this.dispatchEvent(new CustomEvent('change'));
     }
 
@@ -226,13 +228,6 @@ export class TimePicker extends LitElement {
         const element = this.shadowRoot.querySelector(`[tabIndex="${index}"]`) as HTMLElement;
 
         element?.focus();
-    }
-
-    private overflowValue(value: number, minimum: number, maximum: number) : number {
-        const range = maximum - minimum + 1;
-        const distance = value - minimum;
-
-        return (distance % range + range) % range + minimum;
     }
 }
 

@@ -2,6 +2,7 @@ import { LitElement, css, html } from "lit";
 import { customElement, eventOptions, property, state } from "lit/decorators.js";
 import { createRef, ref, Ref } from "lit/directives/ref.js";
 import { DropdownSide } from "../enums";
+import { overflowValue, snapValue, tween } from "../utils";
 import { TimePicker } from "./time-picker";
 
 @customElement('time-picker-dropdown')
@@ -18,7 +19,8 @@ export class TimePickerDropDown extends LitElement {
         }
     `;
 
-    private canvasRef : Ref<HTMLCanvasElement> = createRef();
+    private _canvasRef : Ref<HTMLCanvasElement> = createRef();
+    private _timeoutId : number = -1;
 
     constructor () {
         super();
@@ -34,7 +36,7 @@ export class TimePickerDropDown extends LitElement {
     width: number = 100;
 
     @property()
-    height: number = 100;
+    height: number = 150;
 
     @state()
     private _hourScroll: number = 0;
@@ -62,7 +64,7 @@ export class TimePickerDropDown extends LitElement {
                 @wheel="${this.handleWheelEvent}"
                 width="100" 
                 height="100"
-                ${ref(this.canvasRef)}>
+                ${ref(this._canvasRef)}>
             </canvas>
         `;
     }
@@ -73,33 +75,27 @@ export class TimePickerDropDown extends LitElement {
     
     @eventOptions({passive: true})
     private handleWheelEvent(event: WheelEvent) {
-        const canvas = this.canvasRef.value;
-        const rect = canvas.getBoundingClientRect();
-
+        const rect = this.getBoundingClientRect();
         const x = event.clientX - rect.left;
-        const rightX = rect.width / 2;
+        const rightX = this.width / 2;
+        const target = x < rightX ? 'hour' : 'minute';
 
-        const speed = 18 / 4;
+
         const step = event.deltaY > 0 ? 1 : -1;
-        const scroll = speed * step;
 
-        if (x > rightX)
-            this._minuteScroll += scroll;
-        else
-            this._hourScroll += scroll;
-            
+        this[`_${target}Scroll`] += (25/2) * step;
+        
         this.renderCanvas();
+        this.handleScrollSnap(event);
     }
 
     private renderCanvas() {
-        const canvas = this.canvasRef.value;
+        const canvas = this._canvasRef.value;
         const context = canvas.getContext('2d');
 
         this.scaleCanvas(context);
 
-        const textSize = 13;
-
-        context.font = `${textSize}px monospace`;
+        context.font = '13px monospace';
         context.textBaseline = 'top';
         context.textAlign = 'center';
 
@@ -121,7 +117,7 @@ export class TimePickerDropDown extends LitElement {
 
     private renderValues (context: CanvasRenderingContext2D, side: DropdownSide, min: number, max: number) {
         const textSize = 13;
-        const lineHeight = 18;
+        const lineHeight = 25;
 
         const maskedLength = Math.ceil(this.height / lineHeight);
         const bufferedLength = maskedLength + 2;
@@ -135,7 +131,7 @@ export class TimePickerDropDown extends LitElement {
             const offset = Math.floor(scroll / lineHeight);
             let value = offset + index + min;
 
-            value = this.overflowValue(value, min, max);
+            value = overflowValue(value, min, max);
 
             const text = value.toString().padStart(2, '0');
             const yOffset = Math.floor(scroll % lineHeight);
@@ -150,17 +146,37 @@ export class TimePickerDropDown extends LitElement {
         }
     }
 
+    private _scrollStart = 0;
+
+    private handleScrollSnap (event: WheelEvent) {
+        if (this._timeoutId === -1) {
+            this._scrollStart = performance.now();
+        }
+        else
+            window.clearTimeout(this._timeoutId);
+        
+        this._timeoutId = window.setTimeout(() => this.snapScroll(event), 150);
+    }
+
+    private snapScroll (event: WheelEvent) {
+        const direction = event.deltaY > 0 ? 0 : 1;
+        const snap = snapValue(this._minuteScroll, 25, direction);
+        const initial = this._minuteScroll;
+
+        this._timeoutId = -1;
+
+        const scrollEnd = performance.now();
+        const duration = Math.max(200 - (scrollEnd - this._scrollStart), 0);
+
+        tween(initial, snap, duration, scroll => {
+            this._minuteScroll = scroll;
+            this.renderCanvas();
+        });
+    }
+
     private getTextX(origin: number, position: DropdownSide): number {
         const x = position === DropdownSide.Left ? 1 : 3;
         return (origin / 4) * x;
-    }
-
-    // TODO: Make into separate module.
-    private overflowValue(value: number, minimum: number, maximum: number) : number {
-        const range = maximum - minimum + 1;
-        const distance = value - minimum;
-
-        return (distance % range + range) % range + minimum;
     }
 }
 
