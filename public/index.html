@@ -5,11 +5,31 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Time Picker</title>
+    <style>
+        #demo {
+            display: grid;
+            font-family: sans-serif;
+            gap: 10px;
+            grid-template-columns: repeat(2, 1fr);
+            width: max-content;
+        }
+
+        .demo-header {
+            font-size: 14px;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
     <h1>TimePicker</h1>
-    <input type="date"/>
-    <time-picker id="time-picker" value="03:34 PM"></time-picker>
+
+    <div id="demo">
+        <span class="demo-header">Custom</span>
+        <span class="demo-header">Built-in</span>
+        
+        <time-picker id="time-picker" value="03:34 PM"></time-picker>
+        <input type="time">
+    </div>
 
     <p id="debug">Value: 03:34 PM</p>
 </body>
