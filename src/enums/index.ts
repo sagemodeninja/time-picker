@@ -11,3 +11,8 @@ export enum TimePeriod {
     AM,
     PM
 }
+
+export enum DropdownSide {
+    Left,
+    Right
+}
